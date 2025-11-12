@@ -1,0 +1,7 @@
+first_name,last_name,email,phone,license_no,org,registration_type,meal_allowance,intended_days
+John,Doe,john.doe@example.com,+1234567890,MD12345,City Hospital,Full Conference,6,3
+Jane,Smith,jane.smith@example.com,+1234567891,MD12346,Regional Medical Center,Full Conference,6,3
+Bob,Johnson,bob.johnson@example.com,+1234567892,MD12347,University Hospital,Single Day,2,1
+Alice,Williams,alice.williams@example.com,+1234567893,MD12348,Community Clinic,Full Conference,6,3
+Charlie,Brown,charlie.brown@example.com,+1234567894,MD12349,Private Practice,Single Day,2,1
+
