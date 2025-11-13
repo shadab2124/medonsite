@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const isValid = await verifyPassword(password, user.passwordHash)
+    // ✅ Use correct password field
+    const isValid = await verifyPassword(password, user.password)
     if (!isValid) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ✅ Return JWT cookie
     return createAuthResponse({
       id: user.id,
       email: user.email,
@@ -46,4 +48,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
