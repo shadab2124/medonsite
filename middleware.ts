@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getSessionUser } from './lib/auth'
 
-const publicRoutes = ['/login', '/api/auth/login', '/api/auth/google', '/api/auth/google/callback']
+const publicRoutes = ['/', '/login', '/api/auth/login', '/api/auth/google', '/api/auth/google/callback']
 const adminRoutes = ['/admin']
 const kioskRoutes = ['/kiosk']
 
@@ -10,7 +10,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow public routes
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
+  if (
+    publicRoutes.some(route => {
+      if (route === '/') {
+        return pathname === '/'
+      }
+      return pathname.startsWith(route)
+    })
+  ) {
     return NextResponse.next()
   }
 
