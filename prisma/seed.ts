@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { PrismaClient, UserRole } from '@prisma/client'
 import { hashPassword } from '../lib/auth'
 import { generateBadgeId } from '../lib/badge-id'

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ Use correct password field
-    const isValid = await verifyPassword(password, user.password)
+    const isValid = await verifyPassword(password, user.passwordHash)
     if (!isValid) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
