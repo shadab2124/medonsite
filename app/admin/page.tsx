@@ -26,82 +26,94 @@ export default async function AdminDashboard() {
     }),
   ])
 
+  const stats = [
+    {
+      name: 'Active attendees',
+      value: attendeesCount,
+      description: 'Currently eligible for scanning',
+      color: 'from-indigo-500 via-indigo-500 to-indigo-600',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 0115 0v.75H4.5v-.75z"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: 'Active QR tokens',
+      value: activeTokens,
+      description: 'Live and ready for use',
+      color: 'from-emerald-500 via-emerald-500 to-emerald-600',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M6 5.25A2.25 2.25 0 018.25 3h2.5A2.25 2.25 0 0113 5.25v2.5A2.25 2.25 0 0110.75 10h-2.5A2.25 2.25 0 016 7.75v-2.5zM6 16.25A2.25 2.25 0 018.25 14h2.5A2.25 2.25 0 0113 16.25v2.5A2.25 2.25 0 0110.75 21h-2.5A2.25 2.25 0 016 18.75v-2.5zM15 5.25A2.25 2.25 0 0117.25 3h.5A2.25 2.25 0 0120 5.25v.5A2.25 2.25 0 0117.75 8h-.5A2.25 2.25 0 0115 5.75v-.5zM15 14.25A2.25 2.25 0 0117.25 12h.5A2.25 2.25 0 0120 14.25v4.5A2.25 2.25 0 0117.75 21h-.5A2.25 2.25 0 0115 18.75v-4.5z"
+          />
+        </svg>
+      ),
+    },
+    {
+      name: "Today's scans",
+      value: todayScans,
+      description: 'Successful gate validations',
+      color: 'from-sky-500 via-sky-500 to-sky-600',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ),
+    },
+    {
+      name: 'Meals consumed',
+      value: mealUsage._sum.count || 0,
+      description: 'Across all attended sessions',
+      color: 'from-amber-500 via-amber-500 to-amber-600',
+      icon: (
+        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 3v18m8.25-9a8.25 8.25 0 10-16.5 0 8.25 8.25 0 0016.5 0z"
+          />
+        </svg>
+      ),
+    },
+  ]
+
   return (
-    <div className="px-4 py-6 sm:px-0">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
+        <p className="text-sm text-slate-500">
+          Monitor attendee throughput, QR activity, and meal consumption for your event in real time.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.name}
+            className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+          >
+            <div className={`absolute -right-20 -top-20 h-40 w-40 rounded-full bg-gradient-to-br ${stat.color} opacity-20 transition group-hover:scale-110`} />
+            <div className="relative flex items-center justify-between">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900/5 text-slate-700">
+                {stat.icon}
               </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Active Attendees</dt>
-                  <dd className="text-lg font-medium text-gray-900">{attendeesCount}</dd>
-                </dl>
-              </div>
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Live</span>
+            </div>
+            <div className="relative mt-6 space-y-3">
+              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">{stat.name}</p>
+              <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
+              <p className="text-sm text-slate-500">{stat.description}</p>
             </div>
           </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2.01M8 8h2.01M5 12h2.01M8 12h2.01M5 16h2.01M8 16h2.01" />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Active QR Tokens</dt>
-                  <dd className="text-lg font-medium text-gray-900">{activeTokens}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Today's Scans</dt>
-                  <dd className="text-lg font-medium text-gray-900">{todayScans}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Meals Used</dt>
-                  <dd className="text-lg font-medium text-gray-900">{mealUsage._sum.count || 0}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   )

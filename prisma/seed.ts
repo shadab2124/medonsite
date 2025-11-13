@@ -24,6 +24,24 @@ async function main() {
 
   console.log('Created admin user:', admin.email)
 
+  const demoAdminPassword = await hashPassword('demoAdmin123')
+  const demoAdmin = await prisma.user.upsert({
+    where: { email: 'demo.admin@medonsite.com' },
+    update: {
+      passwordHash: demoAdminPassword,
+      name: 'Demo Admin',
+      role: UserRole.ADMIN,
+    },
+    create: {
+      email: 'demo.admin@medonsite.com',
+      name: 'Demo Admin',
+      passwordHash: demoAdminPassword,
+      role: UserRole.ADMIN,
+    },
+  })
+
+  console.log('Created demo admin user:', demoAdmin.email)
+
   // Create gate staff
   const gateStaffPassword = await hashPassword('gate123')
   const gateStaff = await prisma.user.upsert({

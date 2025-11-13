@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,6 +5,154 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String      @id @default(uuid())
+  name             String
+  email            String      @unique
+  passwordHash     String      @map("password_hash")
+  role             UserRole
+  twoFactorEnabled Boolean     @default(false) @map("two_factor_enabled")
+  twoFactorSecret  String?     @map("two_factor_secret")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+  accessLogs       AccessLog[]
+  events           Event[]
+
+  @@map("users")
+}
+
+model Event {
+  id             String        @id @default(uuid())
+  name           String
+  startDate      DateTime      @map("start_date")
+  endDate        DateTime      @map("end_date")
+  certTemplateId String?       @map("cert_template_id")
+  createdById    String        @map("created_by_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  attendees      Attendee[]
+  certificates   Certificate[]
+  certTemplate   CertTemplate? @relation(fields: [certTemplateId], references: [id])
+  createdBy      User          @relation(fields: [createdById], references: [id])
+  mealUsage      MealUsage[]
+
+  @@map("events")
+}
+
+model CertTemplate {
+  id           String   @id @default(uuid())
+  name         String
+  htmlTemplate String   @map("html_template")
+  assets       Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  events       Event[]
+
+  @@map("cert_templates")
+}
+
+model Attendee {
+  id               String             @id @default(uuid())
+  badgeId          String             @unique @map("badge_id")
+  firstName        String             @map("first_name")
+  lastName         String             @map("last_name")
+  email            String?
+  phone            String?
+  licenseNo        String?            @map("license_no")
+  org              String?
+  registrationType String?            @map("registration_type")
+  mealAllowance    Int                @default(0) @map("meal_allowance")
+  intendedDays     Int?               @map("intended_days")
+  photoUrl         String?            @map("photo_url")
+  active           Boolean            @default(true)
+  source           RegistrationSource
+  externalRowId    String?            @map("external_row_id")
+  eventId          String?            @map("event_id")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  accessLogs       AccessLog[]
+  event            Event?             @relation(fields: [eventId], references: [id])
+  certificates     Certificate[]
+  mealUsage        MealUsage[]
+  qrTokens         QrToken[]
+
+  @@index([badgeId])
+  @@index([email])
+  @@index([eventId])
+  @@map("attendees")
+}
+
+model QrToken {
+  id         String      @id @default(uuid())
+  attendeeId String      @map("attendee_id")
+  token      String      @unique
+  version    Int         @default(1)
+  isActive   Boolean     @default(true) @map("is_active")
+  issuedAt   DateTime    @default(now()) @map("issued_at")
+  expiresAt  DateTime    @map("expires_at")
+  revokedAt  DateTime?   @map("revoked_at")
+  accessLogs AccessLog[]
+  attendee   Attendee    @relation(fields: [attendeeId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([attendeeId])
+  @@index([isActive])
+  @@map("qr_tokens")
+}
+
+model AccessLog {
+  id          String     @id @default(uuid())
+  attendeeId  String?    @map("attendee_id")
+  tokenId     String?    @map("token_id")
+  scanType    ScanType   @map("scan_type")
+  gateId      String?    @map("gate_id")
+  staffUserId String?    @map("staff_user_id")
+  timestamp   DateTime   @default(now())
+  result      ScanResult
+  details     Json?
+  attendee    Attendee?  @relation(fields: [attendeeId], references: [id])
+  staffUser   User?      @relation(fields: [staffUserId], references: [id])
+  token       QrToken?   @relation(fields: [tokenId], references: [id])
+
+  @@index([timestamp])
+  @@index([scanType])
+  @@index([attendeeId])
+  @@index([tokenId])
+  @@map("access_logs")
+}
+
+model MealUsage {
+  id         String   @id @default(uuid())
+  attendeeId String   @map("attendee_id")
+  eventId    String   @map("event_id")
+  date       DateTime @db.Date
+  mealType   MealType @map("meal_type")
+  count      Int      @default(1)
+  scanLogId  String?  @map("scan_log_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  attendee   Attendee @relation(fields: [attendeeId], references: [id])
+  event      Event    @relation(fields: [eventId], references: [id])
+
+  @@index([attendeeId, eventId, date])
+  @@index([eventId])
+  @@map("meal_usage")
+}
+
+model Certificate {
+  id            String   @id @default(uuid())
+  attendeeId    String   @map("attendee_id")
+  eventId       String   @map("event_id")
+  pdfUrl        String   @map("pdf_url")
+  certificateId String   @unique @map("certificate_id")
+  generatedAt   DateTime @default(now()) @map("generated_at")
+  attendee      Attendee @relation(fields: [attendeeId], references: [id])
+  event         Event    @relation(fields: [eventId], references: [id])
+
+  @@index([attendeeId])
+  @@index([eventId])
+  @@map("certificates")
 }
 
 enum UserRole {
@@ -41,168 +186,3 @@ enum RegistrationSource {
   on_spot
   manual
 }
-
-model User {
-  id            String   @id @default(uuid())
-  name          String
-  email         String   @unique
-  passwordHash  String   @map("password_hash")
-  role          UserRole
-  twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
-  twoFactorSecret String? @map("two_factor_secret")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  accessLogs    AccessLog[]
-  events        Event[]
-
-  @@map("users")
-}
-
-model Event {
-  id            String   @id @default(uuid())
-  name          String
-  startDate     DateTime @map("start_date")
-  endDate       DateTime @map("end_date")
-  certTemplateId String? @map("cert_template_id")
-  createdById   String   @map("created_by_id")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  createdBy     User     @relation(fields: [createdById], references: [id])
-  certTemplate  CertTemplate? @relation(fields: [certTemplateId], references: [id])
-  attendees     Attendee[]
-  certificates  Certificate[]
-  mealUsage     MealUsage[]
-
-  @@map("events")
-}
-
-model CertTemplate {
-  id            String   @id @default(uuid())
-  name          String
-  htmlTemplate  String   @map("html_template") @db.Text
-  assets        Json?    // Store asset URLs or references
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  events        Event[]
-
-  @@map("cert_templates")
-}
-
-model Attendee {
-  id                String   @id @default(uuid())
-  badgeId           String   @unique @map("badge_id")
-  firstName         String   @map("first_name")
-  lastName          String   @map("last_name")
-  email             String?
-  phone             String?
-  licenseNo         String?  @map("license_no")
-  org               String?
-  registrationType  String?  @map("registration_type")
-  mealAllowance     Int      @default(0) @map("meal_allowance")
-  intendedDays      Int?     @map("intended_days")
-  photoUrl          String?  @map("photo_url")
-  active            Boolean  @default(true)
-  source            RegistrationSource
-  externalRowId     String?  @map("external_row_id")
-  eventId           String?  @map("event_id")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  event             Event?    @relation(fields: [eventId], references: [id])
-  qrTokens          QrToken[]
-  accessLogs        AccessLog[]
-  mealUsage         MealUsage[]
-  certificates      Certificate[]
-
-  @@index([badgeId])
-  @@index([email])
-  @@index([eventId])
-  @@map("attendees")
-}
-
-model QrToken {
-  id            String   @id @default(uuid())
-  attendeeId    String   @map("attendee_id")
-  token         String   @unique
-  version       Int      @default(1)
-  isActive      Boolean  @default(true) @map("is_active")
-  issuedAt      DateTime @default(now()) @map("issued_at")
-  expiresAt     DateTime @map("expires_at")
-  revokedAt     DateTime? @map("revoked_at")
-
-  // Relations
-  attendee      Attendee @relation(fields: [attendeeId], references: [id], onDelete: Cascade)
-  accessLogs    AccessLog[]
-
-  @@index([token])
-  @@index([attendeeId])
-  @@index([isActive])
-  @@map("qr_tokens")
-}
-
-model AccessLog {
-  id            String     @id @default(uuid())
-  attendeeId    String?    @map("attendee_id")
-  tokenId       String?    @map("token_id")
-  scanType      ScanType   @map("scan_type")
-  gateId        String?    @map("gate_id")
-  staffUserId   String?    @map("staff_user_id")
-  timestamp     DateTime   @default(now())
-  result        ScanResult
-  details       Json?      // Store additional metadata
-
-  // Relations
-  attendee      Attendee?  @relation(fields: [attendeeId], references: [id])
-  token         QrToken?   @relation(fields: [tokenId], references: [id])
-  staffUser     User?      @relation(fields: [staffUserId], references: [id])
-
-  @@index([timestamp])
-  @@index([scanType])
-  @@index([attendeeId])
-  @@index([tokenId])
-  @@map("access_logs")
-}
-
-model MealUsage {
-  id            String     @id @default(uuid())
-  attendeeId    String     @map("attendee_id")
-  eventId       String     @map("event_id")
-  date          DateTime   @db.Date
-  mealType      MealType   @map("meal_type")
-  count         Int        @default(1)
-  scanLogId     String?    @map("scan_log_id")
-  createdAt     DateTime   @default(now()) @map("created_at")
-
-  // Relations
-  attendee      Attendee   @relation(fields: [attendeeId], references: [id])
-  event         Event      @relation(fields: [eventId], references: [id])
-
-  @@index([attendeeId, eventId, date])
-  @@index([eventId])
-  @@map("meal_usage")
-}
-
-model Certificate {
-  id            String     @id @default(uuid())
-  attendeeId    String     @map("attendee_id")
-  eventId       String     @map("event_id")
-  pdfUrl        String     @map("pdf_url")
-  certificateId String     @unique @map("certificate_id") // For template variable
-  generatedAt   DateTime   @default(now()) @map("generated_at")
-
-  // Relations
-  attendee      Attendee   @relation(fields: [attendeeId], references: [id])
-  event         Event      @relation(fields: [eventId], references: [id])
-
-  @@index([attendeeId])
-  @@index([eventId])
-  @@map("certificates")
-}
-

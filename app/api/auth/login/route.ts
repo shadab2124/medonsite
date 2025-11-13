@@ -24,6 +24,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ✅ Ensure password hash exists
+    if (!user.passwordHash) {
+      console.error('User missing password hash:', user.email)
+      return NextResponse.json(
+        { error: 'Invalid credentials' },
+        { status: 401 }
+      )
+    }
+
     // ✅ Use correct password field
     const isValid = await verifyPassword(password, user.passwordHash)
     if (!isValid) {
