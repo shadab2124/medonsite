@@ -37,21 +37,37 @@ export function verifyJWT(token: string): AuthUser | null {
 }
 
 export async function getSessionUser(request: NextRequest): Promise<AuthUser | null> {
-  const token = request.cookies.get('auth-token')?.value || 
-                request.headers.get('authorization')?.replace('Bearer ', '')
+  try {
+    // ✅ Ensure we handle both Edge cookies and regular headers
+    let token = null;
 
-  if (!token) return null
+    // Try to read from cookies (works for both Edge and Node)
+    if (request.cookies?.get('auth-token')) {
+      token = request.cookies.get('auth-token')?.value;
+    }
 
-  const user = verifyJWT(token)
-  if (!user) return null
+    // Fallback to Authorization header (Bearer token)
+    if (!token && request.headers.get('authorization')) {
+      token = request.headers.get('authorization')?.replace('Bearer ', '');
+    }
 
-  // Verify user still exists and is active
-  const dbUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { id: true, email: true, role: true, name: true }
-  })
+    if (!token) return null;
 
-  return dbUser
+    // ✅ Verify token using JWT secret
+    const user = verifyJWT(token);
+    if (!user) return null;
+
+    // ✅ Verify the user exists and is active in DB
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { id: true, email: true, role: true, name: true }
+    });
+
+    return dbUser;
+  } catch (error) {
+    console.error('Error in getSessionUser:', error);
+    return null;
+  }
 }
 
 export function requireRole(allowedRoles: UserRole[]) {
